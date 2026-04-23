@@ -1,0 +1,103 @@
+# ===================================
+# Secrets & Credentials — NEVER COMMIT
+# ===================================
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!dbt_project.json
+!manifest.json
+credentials/
+secrets/
+*.pem
+*.key
+*-credentials*
+*-service-account*
+.env
+.env.*
+!.env.example
+
+# ===================================
+# Python
+# ===================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.virtualenv/
+
+# ===================================
+# dbt
+# ===================================
+dbt/target/
+dbt/dbt_packages/
+dbt/dbt_modules/
+dbt/logs/
+dbt/.user.yml
+
+# ===================================
+# Airflow
+# ===================================
+airflow/logs/
+airflow/airflow.db
+airflow/airflow-webserver.pid
+airflow/standalone_admin_password.txt
+airflow/dags/__pycache__/
+airflow/plugins/__pycache__/
+
+# ===================================
+# Terraform (for Project 6 later)
+# ===================================
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+crash.log
+
+# ===================================
+# IDE & OS
+# ===================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ===================================
+# Logs & temp
+# ===================================
+*.log
+logs/
+tmp/
+temp/
+
+# ===================================
+# Jupyter
+# ===================================
+.ipynb_checkpoints/
+*.ipynb
