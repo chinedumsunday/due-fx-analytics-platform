@@ -37,7 +37,9 @@ A production-grade batch data platform that:
 
 ![Architecture Diagram](docs/architecture.png)
 
-*Architecture diagram added at end of Day 1.*
+The platform follows a four-lane flow: source systems → Airflow ingestion DAGs landing data to GCS → BigQuery storage with dbt transformations (orchestrated by a master DAG using ExternalTaskSensors) → Metabase serving and Cloud Monitoring / Grafana / Telegram observability.
+
+See [docs/architecture.md](docs/architecture.md) for component-level detail and architectural decisions.
 
 ---
 
