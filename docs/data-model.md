@@ -140,7 +140,7 @@ This document defines the dimensional model for the Due FX Analytics warehouse. 
                                                        └──────────┘
 
 ```
-*Note: The two `dim_date` boxes represent the same conformed dimension table — drawn twice for visual clarity.*
+*Note: The two `dim_date` boxes represent the same conformed dimension table - drawn twice for visual clarity.*
 
 ## 5. Modeling Decisions and Conventions
 
