@@ -58,6 +58,29 @@ See [docs/architecture.md](docs/architecture.md) for component-level detail and 
 
 ---
 
+## Configuration
+
+Infrastructure provisioned in GCP project `due-fx-analytics`, region `us-central1`.
+
+| Component | Identifier |
+|---|---|
+| GCP Project | `due-fx-analytics` |
+| Region | `us-central1` |
+| GCS Bucket (raw data) | `gs://due-fx-data-245535` |
+| BigQuery Dataset (raw) | `due-fx-analytics.raw_fx` |
+| BigQuery Dataset (staging) | `due-fx-analytics.staging_fx` |
+| BigQuery Dataset (marts) | `due-fx-analytics.marts_fx` |
+| Service Account (Airflow) | `sa-airflow-runner` |
+| Service Account (dbt) | `sa-dbt-runner` |
+| Service Account (Metabase, read-only on `marts_fx`) | `sa-metabase-reader` |
+
+**Cost guardrails:**
+- Monthly budget: $50 with alerts at $10, $25, $45, $50
+- GCS lifecycle: objects deleted after 90 days
+- BigQuery: default table expiration on `raw_fx` set to 90 days
+
+---
+
 ## Data Sources
 
 | Source | Method | Freshness Target |
