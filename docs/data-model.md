@@ -9,12 +9,12 @@ This document defines the dimensional model for the Due FX Analytics warehouse. 
 * What's the daily NGN/USD parallel rate trend over the last 90 days?
 
 **Operations (Dr. Chimedum):**
-* Which corridors are experiencing elevated failure rates today, and do we have sufficient USD float for projected weekly outflows?
+* Which corridors are experiencing elevated failure rates today, and which corridors are driving this week's outflow volume?
 * What's our transaction volume by corridor for the last 7 days?
 * Which hour of the day has peak transaction volume, by corridor?
 
 **Executive (Dr. Tobiloba):**
-* What's our transaction volume and gross margin trend over the last 30 days, and which corridor is driving growth?
+* What's our transaction and fee-revenue trend over the last 30 days, and which corridor is driving growth?
 * What's our fee revenue by corridor and month over the last 6 months?
 
 ## 2. Dimensional Model - Fact Tables
