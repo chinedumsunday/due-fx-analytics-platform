@@ -24,7 +24,7 @@ This platform replaces guesswork with data — delivering a daily-refreshed view
 
 A production-grade batch data platform that:
 
-1. **Ingests** FX rates from the CBN (official) and a parallel market aggregator, plus internal transaction data via PostgreSQL CDC
+1. **Ingests** FX rates from the CBN (official) and a parallel market aggregator, plus internal transaction data via incremental SQL extraction from PostgreSQL
 2. **Transforms** raw data into a dimensional warehouse model using dbt on BigQuery
 3. **Serves** three role-specific dashboards (Executive, Pricing, Operations) via Metabase
 4. **Monitors** data freshness, pipeline health, and alerts via Telegram when SLAs breach
@@ -87,7 +87,7 @@ Infrastructure provisioned in GCP project `due-fx-analytics`, region `us-central
 |---|---|---|
 | Central Bank of Nigeria (CBN) | REST API | ≤ 24 hours |
 | Parallel Market Aggregator | HTML scraping | ≤ 2 hours |
-| Internal Operational DB | PostgreSQL CDC | ≤ 2 hours |
+| Internal Operational DB | PostgreSQL incremental extraction (watermark-based)| ≤ 2 hours |
 
 ---
 
@@ -151,9 +151,9 @@ Infrastructure budget: **< $50 / month** using GCP free tier + minimal chargeabl
 | Document | Description |
 |---|---|
 | [Project Charter](docs/project-charter.md) | Business context, scope, personas, SLAs, success criteria |
-| Architecture | *Added at end of Day 1* |
-| Data Model | *Added at end of Day 1* |
-| Runbook | *Added at end of Day 1* |
+| Architecture | [Architecture](docs/architecture.md) |
+| Data Model | [Data Model](docs/data-model.md) |
+| Runbook | *Added on day 11* |
 
 ---
 

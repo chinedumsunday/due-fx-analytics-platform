@@ -55,12 +55,12 @@ Building this data platform is urgent for the following reasons:
 ### Dr. Tobiloba Ojo — CEO
 Primary decision: Strategic direction, capital allocation, investor reporting
 Technical ability: Reads dashboards, does not write SQL
-Must answer: "What's our transaction volume and gross margin trend over the last 30 days, and which corridor is driving growth?"
+Must answer: "What's our transaction and fee-revenue trend over the last 30 days, and which corridor is driving growth?"
 
 ### Dr. Chimedum — Head of Operations
 Primary decision: Liquidity positioning, corridor health monitoring, incident response
 Technical ability: Comfortable with pivot tables and dashboard filters; occasional ad-hoc SQL
-Must answer: "Which corridors are experiencing elevated failure rates today, and do we have sufficient USD float for projected weekly outflows?"
+Must answer: "Which corridors are experiencing elevated failure rates today, and which corridors are driving this week's outflow volume?"
 
 ### Dr. Adaeze — Director of Pricing
 Primary decision: Daily spread-setting per corridor
