@@ -54,7 +54,7 @@ The Due FX Analytics Platform is a daily-batch data system for a Nigerian remitt
 
 ## 4. Data Flow Walkthrough: Parallel Market Update
 
-1.  **Clock-Trigger:**  Every 2 hours during business hours (e.g., 17:00 WAT), Airflow triggers the parallel_market_dag.
+1.  **Clock-Trigger:**  EHourly during business hours (09:00–18:00 WAT)". (Hourly comfortably satisfies your ≤2h staleness SLA., Airflow triggers the parallel_market_dag.
 2.  **Extract:** The task sends an HTTPS GET to the parallel market aggregator with rotated user-agent headers to reduce blocking risk. On 5xx response or timeout, it retries with exponential backoff up to 3 times before failing the task. 
 3.  **Land raw HTML**: The raw HTML is saved to gs://due-fx-data/raw/parallel_market/date=YYYY-MM-DD/hour=HH/page.html. Saving the raw response before parsing means a parser fix later doesn't require re-scraping the source.
 4.  **Parse & Convert:** A separate task reads the saved HTML, extracts the rate table, and writes parsed records as JSON back to the same GCS prefix.
@@ -100,3 +100,4 @@ The Due FX Analytics Platform is a daily-batch data system for a Nigerian remitt
 At 10x transaction volume (~5M rows/day), the watermark-based Postgres extraction becomes the first bottleneck — full incremental scans every two hours start putting pressure on the operational database. The fix is replacing the SQL extractor with a CDC pipeline using Debezium reading the Postgres write-ahead log into Kafka, then sinking into the same BigQuery staging layer. This drops transaction data staleness from 2 hours to sub-minute without hammering the source DB.
 
 At Series A, the platform adds team-scale concerns: deeper data quality checks (Great Expectations or Soda), column-level lineage across tools (OpenLineage), and a semantic layer (Cube or dbt Semantic Layer) once analyst headcount exceeds five — at that point, metric drift across dashboards becomes a real risk. Metabase moves to a managed deployment to handle the larger internal analyst team.
+Liquidity/float analytics and true gross-margin are deferred both need sources outside current scope: a treasury/float feed, and per-transaction FX acquisition cost for a real cost basis.
