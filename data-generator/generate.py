@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 import psycopg2
 load_dotenv()
+from datetime import datetime, timedelta
 
 POSTGRES_USER=os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD=os.getenv("POSTGRES_PASSWORD")
@@ -24,7 +25,8 @@ def connect():
     return conn
 
 
-rows= [("NGN_USD", "NGN", "USD", "Nigeria to USA", True), ("NGN_GBP", "NGN", "GBP", "Nigeria to UK", True), ("NGN_EUR", "NGN", "EUR", "Nigeria to Europe", True), ("NGN_JPY", "NGN", "JPY", "Nigeria to Japan", True)]
+rows= [("NGN_USD", "NGN", "USD", "Nigeria to USA", True), ("NGN_GBP", "NGN", "GBP", "Nigeria to UK", True), ("NGN_EUR", "NGN", "EUR", "Nigeria to Europe", True), ("NGN_CAD", "NGN", "CAD", "Nigeria to Canada", True)]
+BASE_RATES = {"USD": 1400, "GBP": 1800, "EUR": 1600, "CAD": 1100}
 
 def seed_corridors(conn):
     with conn.cursor() as cursor:
@@ -44,6 +46,31 @@ def seed_users(conn, n):
             cursor.execute(sql, (tier, country, signup_date))
     conn.commit()
 
+def seed_transactions(conn, n=100):
+    transactions = []
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT user_id FROM users")
+        users = cursor.fetchall()
+        users = [user[0] for user in users]
+        cursor.execute("SELECT corridor_code, target_currency FROM corridors")
+        corridors = cursor.fetchall()
+        for i in range(n):
+            user_id = random.choice(users)
+            corridor_code, target_currency = random.choice(corridors)
+            amount_ngn = round(random.uniform(50000, 5000000), 2)
+            fx_rate_applied = round(BASE_RATES[target_currency] * random.uniform(0.98, 1.02), 6)
+            amount_target_currency = round (amount_ngn / fx_rate_applied, 2)
+            fee_amount_ngn = round(amount_ngn * 0.01, 2)
+            status = random.choices(["initiated", "processing", "completed", "failed"], weights=[0.03, 0.04, 0.9, 0.03])[0]
+            created_at = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23), minutes=random.randint(0, 59))
+            if status in ("completed", "failed"):
+                updated_at = created_at + timedelta(minutes=random.randint(1, 30))
+            else:
+                updated_at = created_at
+            transactions.append((user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at))
+        sql = "INSERT INTO transactions (user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.executemany(sql, transactions)
+
 def main():
     conn = connect()
     truncate = "TRUNCATE TABLE corridors, users RESTART IDENTITY CASCADE" 
@@ -51,6 +78,7 @@ def main():
         cursor.execute(truncate)
     seed_corridors(conn)
     seed_users(conn, 1000)
+    seed_transactions(conn, 100)
     conn.close()    
 
 def check_tables():
@@ -71,4 +99,4 @@ def check_tables():
 
 if __name__ == "__main__":
     main()
-    check_tables() 
+    check_tables()
