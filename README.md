@@ -113,8 +113,8 @@ This is an 11-day build. Progress is tracked below.
 
 | Day | Focus | Status |
 |---|---|---|
-| 1 | Repo scaffolding, project charter, architecture design | In progress |
-| 2 | Data generator — PostgreSQL transaction simulator | Pending |
+| 1 | Repo scaffolding, project charter, architecture design | ✅ Done |
+| 2 | Data generator — PostgreSQL transaction simulator | ✅ Done |
 | 3 | CBN ingestion pipeline (Airflow DAG) | Pending |
 | 4 | Parallel market scraper + rate reconciliation | Pending |
 | 5 | GCS raw layer + BigQuery landing zone | Pending |
