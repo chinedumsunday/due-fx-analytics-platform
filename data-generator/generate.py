@@ -25,8 +25,8 @@ def connect():
     return conn
 
 
-rows= [("NGN_USD", "NGN", "USD", "Nigeria to USA", True), ("NGN_GBP", "NGN", "GBP", "Nigeria to UK", True), ("NGN_EUR", "NGN", "EUR", "Nigeria to Europe", True), ("NGN_CAD", "NGN", "CAD", "Nigeria to Canada", True)]
-BASE_RATES = {"USD": 1400, "GBP": 1800, "EUR": 1600, "CAD": 1100}
+rows= [("NGN_USD", "NGN", "USD", "Nigeria to USA", True), ("NGN_GBP", "NGN", "GBP", "Nigeria to UK", True), ("NGN_EUR", "NGN", "EUR", "Nigeria to Europe", True), ("NGN_AED", "NGN", "AED", "Nigeria to UAE", True)]
+BASE_RATES = {"USD": 1400, "GBP": 1800, "EUR": 1600, "AED": 380}
 HOUR_WEIGHTS = [
     0.02, 0.01, 0.01, 0.01, 0.01, 0.01,   # 00–05  dead hours
     0.02, 0.03, 0.04, 0.04, 0.04, 0.04,   # 06–11  morning
