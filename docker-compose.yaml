@@ -9,6 +9,12 @@ services:
       - "5433:5432"
     volumes:
       - due-postgres-data:/var/lib/postgresql/data
+    networks:
+      - networkName
 
 volumes:
   due-postgres-data: {}
+
+networks:
+  networkName:
+    name: due-network
