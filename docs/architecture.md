@@ -84,6 +84,32 @@ The Due FX Analytics Platform is a daily-batch data system for a Nigerian remitt
 *  **Performance:** Executive dashboards load in under 3 seconds because they query optimized native storage with partition pruning.
 * **Cost:** No BigQuery storage fees for raw data since it lives in GCS.
 
+### ADR-003: Land full daily snapshot from CBN rather than incremental extraction
+**Context:** The CBN exchange-rate source is exposed via GetAllExchangeRates?format=json, an undocumented endpoint that returns the entire rate history (~61,000 records back to 2001) on every call. It accepts no date parameter, so incremental extraction at the source is not possible the API only serves the full dataset.
+
+**Decision:** Land the complete payload as an immutable daily snapshot at raw/cbn/date=YYYY-MM-DD/rates.json, partitioned by the DAG's logical date. Deduplication and "latest rate per currency per day" logic are deferred to the dbt staging layer rather than handled at ingestion.
+
+**Consequences:**
+
+* Each run writes a full point-in-time snapshot, giving a complete audit trail and the ability to detect upstream revisions (central banks do revise historical rates).
+* Storage cost is negligible (~10MB/day).
+* Re-running a given logical date overwrites the same object, preserving idempotency.
+* The tradeoff carrying redundant history in each file — is accepted because it keeps the raw layer a faithful capture of the source and pushes all transformation into dbt, consistent with the project's ELT design.
+
+### ADR-004: Validate after landing, driven by the Celery executor
+
+**Status: Accepted**
+
+**Context:** The pipeline runs on Airflow's CeleryExecutor, where tasks may execute on different workers with no shared local filesystem. The CBN payload is ~10MB — too large to pass between tasks via XCom without bloating the metadata database, and impossible to hand off via local disk across workers.
+
+**Decision:** Structure the DAG as fetch → land → validate, where validate reads the landed object back from GCS rather than receiving the data in memory. Each task retrieves the object path (a small string) via XCom; the actual data lives in GCS.
+
+**Consequences:**
+
+* Validation checks the artifact that actually landed in storage, not an in-memory copy — arguably a stronger guarantee.
+* It costs an extra GCS round-trip: validate re-downloads the full file, which is the dominant cost of that task.
+* At scale, the preferred pattern is to fetch, validate, and land within a single task — validating the payload in memory before upload and returning only the object path. This DAG keeps the three-task split for clarity and to mirror the extract→land→validate structure in the architecture diagram; the single-task consolidation is noted as the production evolution.
+
 ---
 
 ## 6. Out of Scope (and Why That's Acceptable)
