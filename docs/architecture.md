@@ -110,6 +110,36 @@ The Due FX Analytics Platform is a daily-batch data system for a Nigerian remitt
 * It costs an extra GCS round-trip: validate re-downloads the full file, which is the dominant cost of that task.
 * At scale, the preferred pattern is to fetch, validate, and land within a single task — validating the payload in memory before upload and returning only the object path. This DAG keeps the three-task split for clarity and to mirror the extract→land→validate structure in the architecture diagram; the single-task consolidation is noted as the production evolution.
 
+### ADR-005: Parallel market rates sourced from abokidollar JSON API
+
+**Status: Accepted**
+
+Context: The architecture originally specified HTML scraping of a parallel-market aggregator. Evaluation of available sources found: AbokiFx is now a paid service; ngnrates last updated AED in 2020; nairatoday embeds 90 days of history in page JSON but the series ends 2026-02-26 (five months stale) and omits AED; abokiforex.app serves all four corridors in server-rendered HTML but exposes no timestamp and requires selectors scoped around a shared `rate-value` class also used by its CBN section. abokidollar.com/api/rates returns clean JSON with buy and sell rates, ISO currency codes, a `lastUpdated` timestamp, and a 7-day history array per currency, covering all four project corridors (USD, GBP, EUR, AED).
+
+**Decision:** Ingest parallel market rates from the abokidollar JSON API rather than scraping HTML.
+
+**Consequences:**
+
+* Eliminates HTML parsing fragility and the maintenance burden of CSS selectors against a third-party layout.
+* `lastUpdated` provides a source-supplied observation time, which the HTML alternatives did not.
+* Trade-off: the architecture's three-ingestion-pattern design (REST API, HTML scrape, incremental DB extraction) loses its scraping leg. Accepted because source reliability outweighs pattern variety; HTML scraping remains demonstrable if a future source requires it.
+* The payload mixes Type: `"Black Market"` and `Type: "CBN"` records. The CBN records carry unreliable sell rates (WAUA sell of 14 against a buy of 1867.21; JPY sell of 12) and are excluded — official rates come from CBN's own API. Filtering occurs in validation and again in dbt staging.
+* The endpoint is undocumented; raw landing in GCS mitigates the risk of an unannounced schema change.
+
+### ADR-006: Daily ingestion cadence matched to source publication, with staleness tolerance
+
+**Status: Accepted**
+
+Context: The architecture specified hourly polling between 09:00 and 18:00 WAT, on the assumption that parallel market rates move intraday. Inspection of the source showed a single `lastUpdated` value of approximately 01:10 UTC, a `history` array at daily grain, and identical USD rates across three consecutive days. Hourly polling would produce roughly ten byte-identical objects per day, none of which represent distinct observations.
+
+**Decision:** Schedule the DAG once daily at 02:00 UTC, after the source's ~01:10 UTC publication. The fact grain is one row per currency, per source type, per day.
+
+**Consequences:**
+
+Object path reverts to `raw/parallel/date=YYYY-MM-DD/rates.json` with no hour partition, matching the CBN DAG's layout.
+Each response includes a rolling 7-day history window, so any single successful run repairs gaps of up to a week. The pipeline is self-healing; no `catchup` and no separate backfill DAG are required for this source.
+Only 7 days of parallel history are available at launch, against 90 days of simulated transactions. Spread metrics are computed over the available overlap and deepen as the pipeline accumulates its own history — the warehouse becomes the system of record for anything beyond the source's window.
+Validation applies a 2-day staleness tolerance rather than requiring same-day freshness. The source publishes irregularly: a 41-hour gap was observed during development, and the initial same-day assertion correctly failed. A tolerance window distinguishes normal publication lag from a genuinely dead feed.
 ---
 
 ## 6. Out of Scope (and Why That's Acceptable)
