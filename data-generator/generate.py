@@ -6,6 +6,9 @@ import psycopg2
 load_dotenv()
 from datetime import datetime, timedelta
 from psycopg2.extras import execute_values
+import time
+import sys
+
 
 POSTGRES_USER=os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD=os.getenv("POSTGRES_PASSWORD")
@@ -39,6 +42,9 @@ AMOUNT_BRACKETS = [
     (600_000, 3_000_000),   # large — occasional big sends
     ]
 BRACKET_WEIGHTS = [0.70, 0.25, 0.05]
+SECONDS_PER_TICK = 30
+NEW_TRANSACTIONS_PER_TICK = 5
+INFLIGHT_ROWS_TO_ADVANCE_PER_TICK = 3
 
 def seed_corridors(conn):
     with conn.cursor() as cursor:
@@ -90,15 +96,63 @@ def seed_transactions(conn, n=100):
         sql = "INSERT INTO transactions (user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at) VALUES %s"
         execute_values(cursor, sql, transactions)
 
-def main():
-    conn = connect()
-    truncate = "TRUNCATE TABLE corridors, users, transactions RESTART IDENTITY CASCADE" 
+def live_mode(conn, n=NEW_TRANSACTIONS_PER_TICK):
     with conn.cursor() as cursor:
-        cursor.execute(truncate)
-    seed_corridors(conn)
-    seed_users(conn, 1000)
-    seed_transactions(conn, 30000)
-    conn.close()    
+        cursor.execute("SELECT user_id FROM users")
+        users = cursor.fetchall()
+        users = [user[0] for user in users]
+        cursor.execute("SELECT corridor_code, target_currency FROM corridors")
+        corridors = cursor.fetchall()
+        while True: 
+            transactions = []
+            for i in range(n):
+                user_id = random.choice(users)
+                corridor_code, target_currency = random.choices(corridors, weights=[0.5, 0.2, 0.2, 0.1])[0]
+                low, high = random.choices(AMOUNT_BRACKETS, weights=BRACKET_WEIGHTS)[0]
+                amount_ngn = round(random.uniform(low, high), 2)
+                fx_rate_applied = round(BASE_RATES[target_currency] * random.uniform(0.98, 1.02), 6)
+                amount_target_currency = round (amount_ngn / fx_rate_applied, 2)
+                fee_amount_ngn = round(amount_ngn * 0.01, 2)
+                status = random.choices(["initiated", "processing", "completed", "failed"], weights=[0.4, 0.35, 0.23, 0.02])[0]
+                created_at = datetime.now() 
+                updated_at = created_at
+                transactions.append((user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at))
+            sql = "INSERT INTO transactions (user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at) VALUES %s"
+            execute_values(cursor, sql, transactions)
+            sql2 = "{} rows inserted at {}".format(len(transactions), datetime.now())
+            print(sql2)
+            sql3 = "SELECT transaction_id, status FROM transactions WHERE status IN ('initiated', 'processing') ORDER BY updated_at asc LIMIT %s"
+            cursor.execute(sql3, (INFLIGHT_ROWS_TO_ADVANCE_PER_TICK,))
+            inflight_transactions = cursor.fetchall()
+            for transaction_id, status in inflight_transactions:
+                if status == "initiated":
+                    new_status = "processing"
+                elif status == "processing":
+                    new_status = random.choices(["completed", "failed"], weights=[0.9, 0.1])[0]
+                else:
+                    continue
+                sql4 = "UPDATE transactions SET status = %s, updated_at = %s WHERE transaction_id = %s"
+                cursor.execute(sql4, (new_status, datetime.now(), transaction_id))
+                conn.commit()
+            print(inflight_transactions)
+            time.sleep(SECONDS_PER_TICK)
+
+def main():
+    if "--live" in sys.argv:
+        conn = connect()
+        live_mode(conn, n=NEW_TRANSACTIONS_PER_TICK)
+        conn.close()
+    else:
+        conn = connect()
+        truncate = "TRUNCATE TABLE corridors, users, transactions RESTART IDENTITY CASCADE" 
+        with conn.cursor() as cursor:
+            cursor.execute(truncate)
+        seed_corridors(conn)
+        seed_users(conn, 1000)
+        seed_transactions(conn, 30000) 
+        check_tables()
+        conn.close()   
+
 
 def check_tables():
     conn = connect()
@@ -118,4 +172,4 @@ def check_tables():
 
 if __name__ == "__main__":
     main()
-    check_tables()
+    
