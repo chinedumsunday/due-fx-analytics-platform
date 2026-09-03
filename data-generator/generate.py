@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 import psycopg2
 load_dotenv()
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from psycopg2.extras import execute_values
 import time
 import sys
@@ -114,12 +114,12 @@ def live_mode(conn, n=NEW_TRANSACTIONS_PER_TICK):
                 amount_target_currency = round (amount_ngn / fx_rate_applied, 2)
                 fee_amount_ngn = round(amount_ngn * 0.01, 2)
                 status = random.choices(["initiated", "processing", "completed", "failed"], weights=[0.4, 0.35, 0.23, 0.02])[0]
-                created_at = datetime.now() 
+                created_at = datetime.now(timezone.utc) 
                 updated_at = created_at
                 transactions.append((user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at))
             sql = "INSERT INTO transactions (user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at) VALUES %s"
             execute_values(cursor, sql, transactions)
-            sql2 = "{} rows inserted at {}".format(len(transactions), datetime.now())
+            sql2 = "{} rows inserted at {}".format(len(transactions), datetime.now(timezone.utc))
             print(sql2)
             sql3 = "SELECT transaction_id, status FROM transactions WHERE status IN ('initiated', 'processing') ORDER BY updated_at asc LIMIT %s"
             cursor.execute(sql3, (INFLIGHT_ROWS_TO_ADVANCE_PER_TICK,))
@@ -132,7 +132,7 @@ def live_mode(conn, n=NEW_TRANSACTIONS_PER_TICK):
                 else:
                     continue
                 sql4 = "UPDATE transactions SET status = %s, updated_at = %s WHERE transaction_id = %s"
-                cursor.execute(sql4, (new_status, datetime.now(), transaction_id))
+                cursor.execute(sql4, (new_status, datetime.now(timezone.utc), transaction_id))
                 conn.commit()
             print(inflight_transactions)
             time.sleep(SECONDS_PER_TICK)
