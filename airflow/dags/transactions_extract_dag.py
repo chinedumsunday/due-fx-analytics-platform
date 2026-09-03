@@ -1,4 +1,6 @@
 import datetime
+import json
+import pandas as pd
 from airflow.sdk import dag, task
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.sdk import get_current_context
@@ -38,6 +40,25 @@ def transactions_extract_dag():
         print(f"Data interval start: {data_interval_start}")
         print(f"Data interval end: {data_interval_end}")
         return object_name
-    extract_and_land_transactions()
+
+    @task()
+    def validate_transactions_extract_dag(object_name):
+        ctx = get_current_context()
+        data_interval_end = ctx["data_interval_end"]
+        data_interval_start = data_interval_end - LOOKBACK
+        hook = GCSHook(gcp_conn_id="google_cloud_default")
+        data = hook.download(bucket_name="due-fx-data-245535", object_name=object_name)
+        rates = pd.read_parquet(BytesIO(data))
+        assert not rates.empty, f"No transactions found between {data_interval_start} and {data_interval_end}"
+        required_columns = {"transaction_id", "user_id", "corridor_code", "amount_ngn", "amount_target_currency", "fx_rate_applied", "fee_amount_ngn", "status", "created_at", "updated_at"}
+        assert required_columns.issubset(rates.columns), f"Missing required columns: {required_columns - set(rates.columns)}"
+        print(f"Validated {len(rates)} records between {data_interval_start} and {data_interval_end}")
+        assert rates["updated_at"].min() >= data_interval_start and rates["updated_at"].max() < data_interval_end, f"Some records have updated_at outside the expected range: {data_interval_start} to {data_interval_end}"
+        return {"record_count": len(rates), "data_interval_start": str(data_interval_start), "data_interval_end": str(data_interval_end)}
+    landed = extract_and_land_transactions()
+    validate_transactions_extract_dag(landed)
+    
+
+
 
 transactions_extract_dag()
