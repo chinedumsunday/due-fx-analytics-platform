@@ -22,9 +22,12 @@ CBN_URL = "https://www.cbn.gov.ng/api/GetAllExchangeRates?format=json"
 def cbn_rates_dag():
     @task()
     def fetch_cbn_rates():
+        n_rates = []
         response = requests.get(CBN_URL, timeout=30)
         response.raise_for_status()
-        rates = json.dumps(response.json())
+        for rate in response.json():
+            n_rates.append(json.dumps(rate))
+        rates = "\n".join(n_rates)
         return rates
     
     @task()
@@ -32,7 +35,7 @@ def cbn_rates_dag():
         ctx = get_current_context()
         ds = ctx["ds"]  # Get the execution date in YYYY-MM-DD format
         hook = GCSHook(gcp_conn_id="google_cloud_default")
-        object_name = f"raw/cbn/date={ds}/rates.json"
+        object_name = f"raw/cbn/date={ds}/rates.ndjson"
         hook.upload(bucket_name="due-fx-data-245535", object_name=object_name, data=rates)
         return object_name
 
@@ -42,7 +45,8 @@ def cbn_rates_dag():
         ds = ctx["ds"]  # Get the execution date in YYYY-MM-DD format
         hook = GCSHook(gcp_conn_id="google_cloud_default")
         data = hook.download(bucket_name="due-fx-data-245535", object_name=object_name)
-        rates = json.loads(data)
+        data = data.decode("utf-8")
+        rates = [json.loads(line) for line in data.splitlines() if line.strip()]
         assert isinstance(rates, list), "payload is not a list"
         assert len(rates) > 0, "payload is empty"
         required = {"currency", "ratedate", "centralrate"}

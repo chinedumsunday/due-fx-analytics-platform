@@ -130,16 +130,71 @@ Context: The architecture originally specified HTML scraping of a parallel-marke
 
 **Status: Accepted**
 
-Context: The architecture specified hourly polling between 09:00 and 18:00 WAT, on the assumption that parallel market rates move intraday. Inspection of the source showed a single `lastUpdated` value of approximately 01:10 UTC, a `history` array at daily grain, and identical USD rates across three consecutive days. Hourly polling would produce roughly ten byte-identical objects per day, none of which represent distinct observations.
+**Context:** The architecture specified hourly polling between 09:00 and 18:00 WAT, on the assumption that parallel market rates move intraday. Inspection of the source showed a single `lastUpdated` value of approximately 01:10 UTC, a `history` array at daily grain, and identical USD rates across three consecutive days. Hourly polling would produce roughly ten byte-identical objects per day, none of which represent distinct observations.
 
 **Decision:** Schedule the DAG once daily at 02:00 UTC, after the source's ~01:10 UTC publication. The fact grain is one row per currency, per source type, per day.
 
 **Consequences:**
 
-Object path reverts to `raw/parallel/date=YYYY-MM-DD/rates.json` with no hour partition, matching the CBN DAG's layout.
-Each response includes a rolling 7-day history window, so any single successful run repairs gaps of up to a week. The pipeline is self-healing; no `catchup` and no separate backfill DAG are required for this source.
-Only 7 days of parallel history are available at launch, against 90 days of simulated transactions. Spread metrics are computed over the available overlap and deepen as the pipeline accumulates its own history — the warehouse becomes the system of record for anything beyond the source's window.
-Validation applies a 2-day staleness tolerance rather than requiring same-day freshness. The source publishes irregularly: a 41-hour gap was observed during development, and the initial same-day assertion correctly failed. A tolerance window distinguishes normal publication lag from a genuinely dead feed.
+* Object path reverts to `raw/parallel/date=YYYY-MM-DD/rates.json` with no hour partition, matching the CBN DAG's layout.
+* Each response includes a rolling 7-day history window, so any single successful run repairs gaps of up to a week. The pipeline is self-healing; no `catchup` and no separate backfill DAG are required for this source.
+* Only 7 days of parallel history are available at launch, against 90 days of simulated transactions. Spread metrics are computed over the available overlap and deepen as the pipeline accumulates its own history — the warehouse becomes the system of record for anything beyond the source's window.
+* Validation applies a 2-day staleness tolerance rather than requiring same-day freshness. The source publishes irregularly: a 41-hour gap was observed during development, and the initial same-day assertion correctly failed. A tolerance window distinguishes normal publication lag from a genuinely dead feed.
+
+### ADR-007: Interval-scoped incremental extraction without a stored watermark
+
+**status: Accepted**
+
+**Context:** — the transactions table only grows and rows mutate after creation, so full extraction every two hours is wasteful. Three approaches were considered: a stored watermark in an Airflow Variable, querying the destination for its max, or scoping to the run's data interval. The Variable approach carries mutable state outside the data with a failure window where rows can be silently lost; querying the destination requires a warehouse that doesn't exist yet at this stage.
+
+**Decision:** — extraction scoped to a time window derived from the run's logical timestamp: `data_interval_end - LOOKBACK`. `updated_at` is the filter column, not `created_at`, because status transitions mutate rows after creation.
+
+**Consequences:** 
+*the good: no external state, retries and re-runs produce identical windows and identical output. The finding: Airflow 3 collapses `data_interval_start` and `data_interval_end` to a single instant under both cron and timedelta schedules in this deployment, so the window is computed explicitly; a single `LOOKBACK` constant drives both the schedule and the subtraction so they cannot drift. The trade-off: a run that never executes leaves its window permanently uncovered, where a max-seen watermark would eventually sweep it up. The evolution path: CDC via Debezium or Datastream when volume justifies the operational cost.
+
+### ADR-008: NDJSON as the raw format for JSON API sources
+
+**Status: Accepted**
+
+**Context:** Both API sources return a JSON array as a single document. BigQuery external tables over JSON require newline-delimited JSON — one complete object per line — and reject enclosing arrays. Alternatives considered: landing each file as a single JSON-typed column and parsing with JSON functions in dbt, or converting to Parquet at ingestion.
+
+**Decision:** Serialize each record individually and join with newlines, landing `.ndjson` files. Parquet remains the format for the tabular transactions source, where it carries its own schema.
+
+**Consequences:**
+
+* External tables read the files directly with autodetected schemas; CBN's rate strings resolve to FLOAT and dates to DATE without explicit casting.
+* The change is to serialization, not content — no records are altered, dropped, or reinterpreted — so it remains consistent with the raw-is-faithful principle in ADR-003.
+* Validation tasks now parse line-delimited content rather than a single document.
+* Files landed before this change were in array format and were removed rather than migrated; the parallel source's rolling 7-day history window makes such data re-fetchable.
+
+### ADR-009: Normalize top-level field names at ingestion for BigQuery compatibility
+
+**Status: Accepted**
+
+**Context:** The parallel market payload uses inconsistent field naming: `"Buy Rate"`, `"Sell Rate"` and `"Currency Name"` are title case with spaces, while lastUpdated is camelCase. BigQuery column identifiers may contain only letters, numbers and underscores, so external table creation failed on the spaced names.
+
+**Decision:** Apply a field-name mapping at ingestion, normalizing all top-level keys to snake_case. Nested fields within the `history` array (`buyRate`, `sellRate`) are already valid identifiers and pass through unchanged.
+
+**Consequences:**
+
+* Column names are uniform across the raw layer, which keeps staging models readable.
+* Every downstream consumer of the raw file must use the normalized names; the validation task was updated accordingly. This coupling is the cost of transforming at ingestion.
+* Rejected alternatives: declaring an explicit schema with field mapping in the DDL, or landing each record as a single JSON column and extracting in dbt. Both preserve the source names exactly but push complexity into every downstream query.
+* Nested and top-level fields now follow different conventions, which staging models should alias consistently when unnesting.
+
+### ADR-010: Separate initial load from incremental extraction
+
+**Status: Accepted**
+
+**Context:** The transactions extraction DAG is scoped to the run's data interval, so it only covers windows from the point it began running. Approximately 29,000 transactions with `updated_at` values spanning 90 days predate the pipeline and would never be extracted. Airflow's native backfill was unsuitable: covering 90 days at a two-hour interval would require roughly 1,080 runs.
+
+**Decision:** A separate one-time DAG (`schedule=None`) performs the initial load, chunked by day — one Parquet file per date partition, named `backfill.parquet` to distinguish it from incremental output. A cutover timestamp bounds the two loads so they do not overlap: the backfill covers `updated_at` before cutover, the incremental DAG everything after.
+
+**Consequences:**
+
+* Date partitions reflect when transactions occurred rather than when they were loaded, preserving partition pruning across history.
+* Rows that were part of the initial load and have since been mutated appear twice in the raw layer at different `updated_at` values. This is expected for an append-only raw layer over a mutable source; staging deduplicates on `transaction_id`, keeping the latest `updated_at`.
+A related defect was corrected before loading: historical rows carried naive local timestamps written into a `timestamptz` column, placing them an hour ahead of UTC. Affected rows were shifted before the backfill so the dataset is internally consistent.
 ---
 
 ## 6. Out of Scope (and Why That's Acceptable)
