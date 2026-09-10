@@ -9,7 +9,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from io import BytesIO
 from airflow.sdk.exceptions import AirflowSkipException
 
-LOOKBACK = timedelta(minutes=2)
+LOOKBACK = timedelta(hours=2)
 
 @dag(
     dag_id = "transactions_extract_dag",
