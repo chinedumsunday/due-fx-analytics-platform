@@ -51,11 +51,11 @@ ENV/
 # ===================================
 # dbt
 # ===================================
-dbt/target/
-dbt/dbt_packages/
-dbt/dbt_modules/
-dbt/logs/
-dbt/.user.yml
+dbt/due_fx/target/
+dbt/due_fx/dbt_packages/
+dbt/due_fx/dbt_modules/
+dbt/due_fx/logs/
+dbt/due_fx/.user.yml
 
 # ===================================
 # Airflow

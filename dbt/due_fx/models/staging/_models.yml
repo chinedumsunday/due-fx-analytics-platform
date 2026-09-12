@@ -1,0 +1,67 @@
+version: 2
+models:
+  - name: stg_transactions
+    description: Staging model for transaction data
+    columns:
+      - name: transaction_id
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        tests:
+          - not_null
+      - name: corridor_code
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['initiated', 'processing', 'completed', 'failed']
+      - name: updated_at
+        tests:
+          - not_null
+  - name: stg_cbn_rates
+    description: Staging model for CBN exchange rates data
+    columns:
+      - name: currency
+        tests:
+          - not_null
+      - name: ratedate
+        tests:
+          - not_null
+      - name: buy_rate
+        tests:
+          - not_null
+      - name: sell_rate
+        tests:
+          - not_null
+      - name: mid_rate
+        tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - currency
+            - ratedate
+    
+  - name: stg_parallel_rates
+    description: Staging model for parallel exchange rates data
+    columns:
+      - name: code
+        tests:
+          - not_null
+      - name: history_date
+        tests:
+          - not_null
+      - name: buy_rate
+        tests:
+          - not_null
+      - name: sell_rate
+        tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - code
+            - history_date

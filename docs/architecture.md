@@ -195,6 +195,27 @@ Context: The architecture originally specified HTML scraping of a parallel-marke
 * Date partitions reflect when transactions occurred rather than when they were loaded, preserving partition pruning across history.
 * Rows that were part of the initial load and have since been mutated appear twice in the raw layer at different `updated_at` values. This is expected for an append-only raw layer over a mutable source; staging deduplicates on `transaction_id`, keeping the latest `updated_at`.
 A related defect was corrected before loading: historical rows carried naive local timestamps written into a `timestamptz` column, placing them an hour ahead of UTC. Affected rows were shifted before the backfill so the dataset is internally consistent.
+
+### ADR-011: Detect and surface upstream data quality defects rather than silently correcting them
+
+**Status: Accepted**
+
+**Context:** A singular dbt test asserting `buy_rate <= sell_rate` on `stg_cbn_rates` returned 35 violating rows out of 61,957 (0.06%). Inspection showed at least three distinct defect classes in CBN's published archive:
+
+* Decimal-point errors in the buy rate — e.g. YEN on 2016-11-01 recorded as 29009.0 against a mid rate of 2.9057; similar cases for CFA (2015-04-02) and SDR (2022-02-11).
+* Leading-digit truncation in the sell rate — e.g. South African Rand on 2023-01-20 with buy 66.17, mid 66.24, sell 26.43, where 66.43 would be consistent; the same pattern appears for YUAN, POUNDS STERLING and SDR on other dates.
+* Small inversions — e.g. YUAN on 2025-06-27 with buy 214.6951 against sell 214.6054, a 0.09 gap likely attributable to rounding or capture timing.
+
+All but one of the affected rows predate 2026; recent data is materially cleaner.
+
+**Decision:** Detect these rows with a test and report them as warnings rather than correcting or excluding them. The test severity is set to `warn`, so the condition is visible on every run without blocking the build.
+
+**Consequences:**
+
+* The staging layer remains a faithful representation of what CBN published. Correcting the values would require inferring true rates the source does not provide, and would embed guesses in the warehouse as though they were facts.
+* A buy rate exceeding a sell rate on the same quote is not a market condition — it would imply a dealer paying more to acquire currency than they charge to release it. These are therefore treated as defects, not observations.
+* Affected rows remain in downstream models. At 0.06% of the dataset, and almost entirely outside the analysis window, the impact on aggregates is negligible; the alternative — filtering them — would hide the problem without measurably improving accuracy.
+* A permanent warning carries the risk of being ignored. Two mitigations are worth considering: scoping the test to recent data, where the marts operate, or setting a threshold so the test errors only if the count rises materially above the known 35.
 ---
 
 ## 6. Out of Scope (and Why That's Acceptable)

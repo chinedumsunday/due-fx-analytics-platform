@@ -1,0 +1,28 @@
+version: 2
+sources:
+  - name: raw_fx
+    database: due-fx-analytics
+    schema: raw_fx
+    description: "Raw FX data from the Due FX API"
+    tables:
+      - name: ext_transactions
+        description: "Transactions data extracted incrementally from postgres"
+        config:
+          freshness:
+            warn_after: {count: 3, period: hour}
+            error_after: {count: 6, period: hour}
+          loaded_at_field: TIMESTAMP_MICROS(DIV(updated_at, 1000))
+      - name: ext_cbn_rates
+        description: "External CBN rates data from the CBN FX API"
+        config:
+          freshness:
+            warn_after: {count: 24, period: hour}
+            error_after: {count: 48, period: hour}
+          loaded_at_field: CAST(ratedate AS TIMESTAMP)
+      - name: ext_parallel_rates
+        description: "External parallel rates data from the Aboki FX API"
+        config:
+          freshness:
+            warn_after: {count: 24, period: hour}
+            error_after: {count: 48, period: hour}
+          loaded_at_field: last_updated
