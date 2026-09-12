@@ -118,7 +118,7 @@ This is an 11-day build. Progress is tracked below.
 | 3 | CBN ingestion pipeline (Airflow DAG) | ✅ Done |
 | 4 | Parallel market scraper + rate reconciliation | ✅ Done |
 | 5 | GCS raw layer + BigQuery landing zone | ✅ Done |
-| 6 | dbt staging models + tests | Pending |
+| 6 | dbt staging models + tests | ✅ Done |
 | 7 | dbt mart models (facts + dimensions) | Pending |
 | 8 | Metabase dashboards (all 3 personas) | Pending |
 | 9 | Observability — freshness alerts, Grafana, Telegram | Pending |
