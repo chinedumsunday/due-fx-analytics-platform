@@ -1,0 +1,58 @@
+version: 2
+models:
+    - name: fact_transaction
+      description: "Fact Table for transactions"
+      columns: 
+        - name: transaction_id
+          tests:
+            - unique
+            - not_null
+        - name: corridor_code
+          data_tests:
+            - relationships:
+                to: "{{ref('dim_corridor')}}"
+                field: corridor_code
+        - name: user_id
+          data_tests:
+            - relationships:
+                to: ref('dim_user')
+                field: user_id
+        - name: date_day
+          data_tests:
+            - relationships:
+                to: ref('dim_date')
+                field: date_day
+    - name: fact_fx_rate
+      description: "Fact forex exchange rate"
+      data_tests:
+        - dbt_utils.unique_combination_of_columns:
+            combination_of_columns:
+            - rate_date
+            - currency_code
+            - source_code
+      columns:
+        - name: source_code 
+          data_tests:
+            - relationships:
+                to: ref('dim_rate_source')
+                field: source_code
+        - name: currency_code
+          tests:
+            - not_null
+        - name: rate_date
+          tests:
+            - not_null
+    - name: mart_corridor_daily
+      description: "Mart  corridor"
+      data_tests:
+        - dbt_utils.unique_combination_of_columns:
+            combination_of_columns: 
+              - txn_date
+              - corridor_code 
+      columns:
+        - name: txn_date
+          tests:
+            - not_null
+        - name: corridor_code
+          tests: 
+            - not_null
