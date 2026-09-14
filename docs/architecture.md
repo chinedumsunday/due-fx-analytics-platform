@@ -216,6 +216,21 @@ All but one of the affected rows predate 2026; recent data is materially cleaner
 * A buy rate exceeding a sell rate on the same quote is not a market condition — it would imply a dealer paying more to acquire currency than they charge to release it. These are therefore treated as defects, not observations.
 * Affected rows remain in downstream models. At 0.06% of the dataset, and almost entirely outside the analysis window, the impact on aggregates is negligible; the alternative — filtering them — would hide the problem without measurably improving accuracy.
 * A permanent warning carries the risk of being ignored. Two mitigations are worth considering: scoping the test to recent data, where the marts operate, or setting a threshold so the test errors only if the count rises materially above the known 35.
+
+### ADR-012: Rate facts carry a published mid rate only where the source publishes one
+
+**Status: Accepted**
+
+**Context:** `fact_fx_rate` unions official rates from CBN with parallel market rates from abokidollar into a single table, distinguished by `source_code`. CBN publishes three values per currency per day — buying, central and selling. abokidollar publishes only buy and sell. The union requires an identical column list on both sides, so the parallel half needs a `mid_rate` value regardless.
+
+Decision: The parallel half supplies `NULL` for `mid_rate` rather than a derived midpoint of buy and sell.
+
+**Consequences:**
+
+A populated `mid_rate` always means a rate the source itself published. A midpoint computed from buy and sell is a different quantity — it assumes the true rate sits halfway between the two sides of a dealer spread, which is an assumption, not an observation. Storing both in one column would present them as equivalent.
+Anyone needing a parallel midpoint computes it explicitly and knows what they have.
+Comparisons across sources should therefore use buy or sell rather than mid, or acknowledge that only CBN contributes a mid.
+The same principle was applied when unifying currency identifiers: CBN publishes names (`US DOLLAR`, `POUNDS STERLING), abokidollar publishes ISO codes. Both are mapped to ISO in the fact so the two sources are comparable, with a CASE expression handling the translation and unmapped currencies filtered out. Only the four corridors Due operates in are retained; the remaining nine CBN currencies and seven abokidollar currencies are excluded as out of scope.
 ---
 
 ## 6. Out of Scope (and Why That's Acceptable)
