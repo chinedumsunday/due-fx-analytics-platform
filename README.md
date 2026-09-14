@@ -42,6 +42,30 @@ The platform follows a four-lane flow: source systems → Airflow ingestion DAGs
 See [docs/architecture.md](docs/architecture.md) for component-level detail and architectural decisions.
 
 ---
+## Dashboards
+
+Three Metabase dashboards, one per persona from the project charter.
+
+### Executive
+![Executive dashboard](docs/images/executive.png)
+
+Volume, transaction count and fee revenue over the last 30 days, with corridor
+mix. NGN_USD accounts for roughly half of all volume.
+
+### Operations
+![Operations dashboard](docs/images/operations.png)
+
+Transaction status breakdown, failure trend, and success rate by corridor —
+the "what is happening today" view.
+
+### Pricing
+![Pricing dashboard](docs/images/pricing.png)
+
+Official (CBN) against parallel market rates by corridor, with computed
+absolute and percentage spread. USD trades at roughly a 4% premium on the
+parallel market.
+
+---
 
 ## Tech Stack
 
@@ -120,7 +144,7 @@ This is an 11-day build. Progress is tracked below.
 | 5 | GCS raw layer + BigQuery landing zone | ✅ Done |
 | 6 | dbt staging models + tests | ✅ Done |
 | 7 | dbt mart models (facts + dimensions) | ✅ Done |
-| 8 | Metabase dashboards (all 3 personas) | Pending |
+| 8 | Metabase dashboards (all 3 personas) | ✅ Done |
 | 9 | Observability — freshness alerts, Grafana, Telegram | Pending |
 | 10 | CI/CD + full pipeline integration test | Pending |
 | 11 | Documentation, runbook, cost audit, final demo | Pending |
