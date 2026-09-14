@@ -25,3 +25,11 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+models:
+  due_fx:
+    marts:
+      +materialized: table
+      +schema: marts_fx
+seeds:
+  +schema: marts_fx

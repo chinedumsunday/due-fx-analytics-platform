@@ -65,3 +65,22 @@ models:
           combination_of_columns:
             - code
             - history_date
+  - name: stg_users
+    description: "Staging model for Users"
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - unique
+  - name: stg_corridors
+    description: "Staging model for Corridors"
+    columns:
+      - name: corridor_code
+        tests:
+          - not_null
+          - unique
+
+
+
+
+          
