@@ -53,13 +53,13 @@ Volume, transaction count and fee revenue over the last 30 days, with corridor
 mix. NGN_USD accounts for roughly half of all volume.
 
 ### Operations
-![Operations dashboard](docs/images/operations.png)
+![Operations dashboard](docs/images/operation.png)
 
 Transaction status breakdown, failure trend, and success rate by corridor —
 the "what is happening today" view.
 
 ### Pricing
-![Pricing dashboard](docs/images/pricing.png)
+![Pricing dashboard](docs/images/pricings.png)
 
 Official (CBN) against parallel market rates by corridor, with computed
 absolute and percentage spread. USD trades at roughly a 4% premium on the
