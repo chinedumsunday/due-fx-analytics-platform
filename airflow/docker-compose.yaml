@@ -66,6 +66,10 @@ x-airflow-common:
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-airflow_jwt_secret}
     AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
+    DBT_PROJECT: ${DBT_PROJECT}
+    DBT_DATASET: ${DBT_DATASET}
+    DBT_KEYFILE: ${DBT_KEYFILE}
+    DBT_PROFILES_DIR: ${DBT_PROFILES_DIR}
     # yamllint disable rule:line-length
     # Use simple http server on scheduler for health checks
     # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
@@ -82,6 +86,8 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ~/.gcp-keys/due-fx-analytics-baff9b33fc96.json:/opt/airflow/.gcp-keys/due-fx-analytics-baff9b33fc96.json:ro
+    - ../.gcp-keys/due-fx-analytics-cc5997c1a88d-dbt.json:/opt/airflow/.gcp-keys/dbt-key.json:ro
+    - ../dbt/due_fx:/opt/airflow/dbt
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on

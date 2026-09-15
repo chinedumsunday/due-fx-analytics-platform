@@ -59,7 +59,7 @@ Transaction status breakdown, failure trend, and success rate by corridor —
 the "what is happening today" view.
 
 ### Pricing
-![Pricing dashboard](docs/images/pricings.png)
+![Pricing dashboard](docs/images/pricings   .png)
 
 Official (CBN) against parallel market rates by corridor, with computed
 absolute and percentage spread. USD trades at roughly a 4% premium on the
