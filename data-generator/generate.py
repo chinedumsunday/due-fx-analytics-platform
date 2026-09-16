@@ -1,14 +1,16 @@
-from faker import Faker
-import random
-from dotenv import load_dotenv
 import os
-import psycopg2
-load_dotenv()
-from datetime import datetime, timedelta, timezone
-from psycopg2.extras import execute_values
-import time
-import sys
+import random
 
+import psycopg2
+from dotenv import load_dotenv
+from faker import Faker
+
+load_dotenv()
+import sys
+import time
+from datetime import datetime, timedelta, timezone
+
+from psycopg2.extras import execute_values
 
 POSTGRES_USER=os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD=os.getenv("POSTGRES_PASSWORD")
@@ -119,7 +121,7 @@ def live_mode(conn, n=NEW_TRANSACTIONS_PER_TICK):
                 transactions.append((user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at))
             sql = "INSERT INTO transactions (user_id, corridor_code, amount_ngn, amount_target_currency, fx_rate_applied, fee_amount_ngn, status, created_at, updated_at) VALUES %s"
             execute_values(cursor, sql, transactions)
-            sql2 = "{} rows inserted at {}".format(len(transactions), datetime.now(timezone.utc))
+            sql2 = f"{len(transactions)} rows inserted at {datetime.now(timezone.utc)}"
             print(sql2)
             sql3 = "SELECT transaction_id, status FROM transactions WHERE status IN ('initiated', 'processing') ORDER BY updated_at asc LIMIT %s"
             cursor.execute(sql3, (INFLIGHT_ROWS_TO_ADVANCE_PER_TICK,))

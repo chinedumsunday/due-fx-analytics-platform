@@ -1,12 +1,9 @@
-import json
-import requests
 import datetime
-from airflow.sdk import dag, task
-from airflow.providers.google.cloud.hooks.gcs import GCSHook
-from airflow.sdk import get_current_context
-from datetime import datetime as dt
-from alerts import notify_failure, notify_sla_miss
 from datetime import timedelta
+
+from airflow.sdk import dag, get_current_context, task
+from alerts import notify_failure, notify_sla_miss
+
 # import pandas as pd
 
 @dag(

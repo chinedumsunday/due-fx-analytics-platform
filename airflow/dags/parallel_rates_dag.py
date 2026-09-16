@@ -1,12 +1,13 @@
-import json
-import requests
 import datetime
-from airflow.sdk import dag, task
-from airflow.providers.google.cloud.hooks.gcs import GCSHook
-from airflow.sdk import get_current_context
+import json
 from datetime import datetime as dt
-from alerts import notify_failure, notify_sla_miss
 from datetime import timedelta
+
+import requests
+from airflow.providers.google.cloud.hooks.gcs import GCSHook
+from airflow.sdk import dag, get_current_context, task
+from alerts import notify_failure, notify_sla_miss
+
 # import pandas as pd
 
 keys = {"Buy Rate":"buy_rate","Sell Rate":"sell_rate","Currency Name":"currency_name","Type":"type","Code":"code","lastUpdated":"last_updated"}
@@ -66,7 +67,7 @@ def parallel_rates_dag():
         assert all(rate.get('buy_rate') <= rate.get('sell_rate') for rate in black_market_rates), "Some Buy Rates are greater than Sell Rates"
         dates = {rate.get('last_updated')[0:10] for rate in black_market_rates if rate.get('last_updated')}
         days_old = dt.strptime(ds, "%Y-%m-%d") - max(dt.strptime(d, "%Y-%m-%d") for d in dates)
-        assert days_old.days <= 2, f"Some rates are more than 2 days old"
+        assert days_old.days <= 2, "Some rates are more than 2 days old"
         required_codes = {"USD", "EUR", "GBP", "AED"}
         assert required_codes.issubset({rate.get('code') for rate in black_market_rates}), f"Missing required codes: {required_codes - {rate.get('code') for rate in black_market_rates}}"
         assert all(rate.get('buy_rate') > 0 for rate in black_market_rates), "Some rates have non-positive Buy Rates"

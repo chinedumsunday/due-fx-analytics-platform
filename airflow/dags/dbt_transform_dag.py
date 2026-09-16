@@ -1,10 +1,11 @@
 import datetime
 from datetime import timedelta
-from alerts import notify_failure, notify_sla_miss
-from airflow.sdk import dag
+
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
-from datetime import timedelta
+from airflow.sdk import dag
+from alerts import notify_failure, notify_sla_miss
+
 DBT_DIR = "/opt/airflow/dbt"
 
 

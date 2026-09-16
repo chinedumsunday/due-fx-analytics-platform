@@ -1,12 +1,12 @@
 import datetime
-from airflow.sdk import dag, task
+from datetime import datetime as dt
+from datetime import timedelta
+from io import BytesIO
+
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.sdk import get_current_context
-from io import BytesIO
-from datetime import datetime as dt
+from airflow.sdk import dag, task
 from alerts import notify_failure, notify_sla_miss
-from datetime import timedelta 
 
 cutover = dt.fromisoformat("2026-09-03 20:52:04+00")
 
