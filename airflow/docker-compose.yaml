@@ -70,6 +70,8 @@ x-airflow-common:
     DBT_DATASET: ${DBT_DATASET}
     DBT_KEYFILE: ${DBT_KEYFILE}
     DBT_PROFILES_DIR: ${DBT_PROFILES_DIR}
+    TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+    TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
     # yamllint disable rule:line-length
     # Use simple http server on scheduler for health checks
     # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server

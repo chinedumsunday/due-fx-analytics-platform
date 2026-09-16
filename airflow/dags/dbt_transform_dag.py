@@ -1,10 +1,10 @@
 import datetime
 from datetime import timedelta
-
+from alerts import notify_failure, notify_sla_miss
 from airflow.sdk import dag
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
-
+from datetime import timedelta
 DBT_DIR = "/opt/airflow/dbt"
 
 
@@ -14,10 +14,13 @@ DBT_DIR = "/opt/airflow/dbt"
     start_date=datetime.datetime(2026, 9, 1),
     catchup=False,
     tags=["dbt", "transform"],
+    on_failure_callback=notify_failure,
     default_args={
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
+        "sla": timedelta(hours=1),
     },
+    sla_miss_callback=notify_sla_miss
 )
 def dbt_transform_dag():
 
