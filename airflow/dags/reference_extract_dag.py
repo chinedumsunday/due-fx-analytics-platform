@@ -1,20 +1,18 @@
 import datetime
-from airflow.sdk import dag, task
-from airflow.providers.google.cloud.hooks.gcs import GCSHook
-from airflow.sdk import get_current_context
-from datetime import datetime as dt
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-from io import BytesIO
-from alerts import notify_failure, notify_sla_miss
 from datetime import timedelta
+from io import BytesIO
 
+from airflow.providers.google.cloud.hooks.gcs import GCSHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.sdk import dag, get_current_context, task
+from alerts import notify_failure, notify_sla_miss
 
 tables = ["users", "corridors"]
 
 @dag(
     dag_id = "reference_extract_dag",
     schedule = "@daily",
-    start_date = datetime.datetime(2026, 7, 1),
+    start_date = datetime.datetime(2026, 7, 1, tzinfo=datetime.timezone.utc),
     catchup = False,
     tags = ["reference", "ingestion"],
     on_failure_callback=notify_failure,

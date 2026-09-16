@@ -145,9 +145,9 @@ This is an 11-day build. Progress is tracked below.
 | 6 | dbt staging models + tests | ✅ Done |
 | 7 | dbt mart models (facts + dimensions) | ✅ Done |
 | 8 | Metabase dashboards (all 3 personas) | ✅ Done |
-| 9 | Observability — freshness alerts, Grafana, Telegram | Pending |
-| 10 | CI/CD + full pipeline integration test | Pending |
-| 11 | Documentation, runbook, cost audit, final demo | Pending |
+| 9 | Observability — freshness alerts, Grafana, Telegram | ✅ Done |
+| 10 | CI/CD + full pipeline integration test | ✅ Done |
+| 11 | Documentation, runbook, cost audit, final demo | ✅ Done |
 
 ---
 
@@ -190,4 +190,4 @@ MIT — see [LICENSE](LICENSE)
 ## Author
 
 **Chinedum Sunday**
-Data Engineer · [chinedumsunday5@gmail.com](mailto:chinedumsunday5@gmail.com)
+Pro. Data Engineer · [chinedumsunday5@gmail.com](mailto:chinedumsunday5@gmail.com)
