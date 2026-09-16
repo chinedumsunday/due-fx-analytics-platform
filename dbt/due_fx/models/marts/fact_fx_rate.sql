@@ -1,35 +1,35 @@
-with cbn AS (
-    SELECT
+with cbn as (
+    select
         c.ratedate as rate_date,
-        CASE 
-            WHEN TRIM(c.currency) = "US DOLLAR" THEN "USD"
-            WHEN TRIM(c.currency) = "POUNDS STERLING" THEN "GBP"
-            WHEN TRIM(c.currency) = "POUND STERLING" THEN "GBP"
-            WHEN TRIM(c.currency) = "EURO" THEN "EUR"
-            WHEN TRIM(c.currency) = "UAE DIRHAM" THEN "AED"
-        END AS currency_code,
+        case
+            when TRIM(c.currency) = "US DOLLAR" then "USD"
+            when TRIM(c.currency) = "POUNDS STERLING" then "GBP"
+            when TRIM(c.currency) = "POUND STERLING" then "GBP"
+            when TRIM(c.currency) = "EURO" then "EUR"
+            when TRIM(c.currency) = "UAE DIRHAM" then "AED"
+        end as currency_code,
         "CBN" as source_code,
-        c.buy_rate as buy_rate,
-        c.sell_rate as sell_rate,
-        c.mid_rate as mid_rate
-    FROM {{ref('stg_cbn_rates')}} as c
+        c.buy_rate,
+        c.sell_rate,
+        c.mid_rate
+    from {{ ref('stg_cbn_rates') }} as c
 ),
 
-parallel AS (
-    SELECT
+parallel as (
+    select
         p.history_date as rate_date,
         p.code as currency_code,
         "ABOKIDOLLAR" as source_code,
-        p.buy_rate as buy_rate,
-        p.sell_rate as sell_rate,
-        CAST(NULL AS FLOAT64) as mid_rate
-    FROM {{ref('stg_parallel_rates')}} as p
+        p.buy_rate,
+        p.sell_rate,
+        CAST(NULL as FLOAT64) as mid_rate
+    from {{ ref('stg_parallel_rates') }} as p
 )
 
-SELECT * 
-FROM cbn 
-WHERE currency_code IS NOT NULL 
-UNION ALL
-SELECT * 
-FROM parallel
-WHERE currency_code IN ('USD', 'GBP','EUR','AED')
+select *
+from cbn
+where currency_code is not NULL
+union all
+select *
+from parallel
+where currency_code in ("USD", "GBP", "EUR", "AED")

@@ -1,1 +1,1 @@
-select * from {{ ref('rate_sources')}}
+select * from {{ ref('rate_sources') }}

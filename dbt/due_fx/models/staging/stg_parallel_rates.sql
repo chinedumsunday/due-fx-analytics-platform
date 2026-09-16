@@ -1,26 +1,38 @@
-WITH cte AS (
-    SELECT * FROM {{ source('raw_fx', 'ext_parallel_rates') }}
-    WHERE type = "Black Market"
+with cte as (
+    select * from {{ source('raw_fx', 'ext_parallel_rates') }}
+    where type = "Black Market"
 ),
 
-cte1 AS (
-    SELECT
+cte1 as (
+    select
         code,
-        nested_json.date AS history_date,
-        nested_json.buyRate AS buy_rate,
-        nested_json.sellRate AS sell_rate,
-        c.date as date
-    FROM cte as c,
-    UNNEST(history) AS nested_json     
+        nested_json.date as history_date,
+        nested_json.buyrate as buy_rate,
+        nested_json.sellrate as sell_rate,
+        c.date
+    from cte as c,
+        UNNEST(history) as nested_json
 ),
 
-cte2 AS (
-    SELECT code, history_date, buy_rate, sell_rate, date,
-        ROW_NUMBER() OVER (PARTITION BY code, history_date ORDER BY date DESC) AS row_num
-    FROM cte1
+cte2 as (
+    select
+        code,
+        history_date,
+        buy_rate,
+        sell_rate,
+        date,
+        ROW_NUMBER()
+            over (partition by code, history_date order by date desc)
+            as row_num
+    from cte1
 )
 
 
-SELECT code, history_date,buy_rate, sell_rate, date
-FROM cte2
-WHERE row_num = 1
+select
+    code,
+    history_date,
+    buy_rate,
+    sell_rate,
+    date
+from cte2
+where row_num = 1
