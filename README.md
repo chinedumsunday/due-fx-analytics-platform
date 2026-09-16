@@ -190,4 +190,4 @@ MIT — see [LICENSE](LICENSE)
 ## Author
 
 **Chinedum Sunday**
-Data Engineer · [chinedumsunday5@gmail.com](mailto:chinedumsunday5@gmail.com)
+Pro. Data Engineer · [chinedumsunday5@gmail.com](mailto:chinedumsunday5@gmail.com)
