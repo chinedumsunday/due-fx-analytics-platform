@@ -12,7 +12,7 @@ DBT_DIR = "/opt/airflow/dbt"
 @dag(
     dag_id="dbt_transform_dag",
     schedule="0 3 * * *",
-    start_date=datetime.datetime(2026, 9, 1),
+    start_date=datetime.datetime(2026, 9, 1, tzinfo=datetime.timezone.utc),
     catchup=False,
     tags=["dbt", "transform"],
     on_failure_callback=notify_failure,

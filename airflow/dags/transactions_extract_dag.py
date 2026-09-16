@@ -14,7 +14,7 @@ LOOKBACK = timedelta(hours=2)
 @dag(
     dag_id = "transactions_extract_dag",
     schedule = LOOKBACK,
-    start_date = datetime.datetime(2026, 7, 1),
+    start_date = datetime.datetime(2026, 7, 1, tzinfo=datetime.timezone.utc),
     catchup = False,
     on_failure_callback=notify_failure,
     tags = ["transactions", "ingestion"],

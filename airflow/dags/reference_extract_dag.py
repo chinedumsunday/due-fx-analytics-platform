@@ -12,7 +12,7 @@ tables = ["users", "corridors"]
 @dag(
     dag_id = "reference_extract_dag",
     schedule = "@daily",
-    start_date = datetime.datetime(2026, 7, 1),
+    start_date = datetime.datetime(2026, 7, 1, tzinfo=datetime.timezone.utc),
     catchup = False,
     tags = ["reference", "ingestion"],
     on_failure_callback=notify_failure,

@@ -15,7 +15,7 @@ CBN_URL = "https://www.cbn.gov.ng/api/GetAllExchangeRates?format=json"
 @dag(
     dag_id = "cbn_rates_dag",
     schedule = "@daily",
-    start_date = datetime.datetime(2026, 7, 1),
+    start_date = datetime.datetime(2026, 7, 1, tzinfo=datetime.timezone.utc),
     catchup = False,
     tags = ["cbn", "ingestion"],
     on_failure_callback=notify_failure,
@@ -60,8 +60,8 @@ def cbn_rates_dag():
         required = {"currency", "ratedate", "centralrate"}
         assert required.issubset(rates[0].keys()), f"missing fields: {required - rates[0].keys()}"    
         dates = {r["ratedate"] for r in rates}
-        latest_date = max(dt.strptime(d, "%Y-%m-%d") for d in dates)
-        days_old = dt.strptime(ds, "%Y-%m-%d") - latest_date
+        latest_date = max(dt.strptime(d, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc) for d in dates)
+        days_old = dt.strptime(ds, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc) - latest_date
         assert days_old.days <= 2, f"rates for {ds} are more than 2 days old"
         print(f"validated {len(rates)} records, latest date {max(dates)}")
         return {"record_count": len(rates), "latest_date": max(dates)}

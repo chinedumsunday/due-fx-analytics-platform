@@ -15,7 +15,7 @@ cutover = dt.fromisoformat("2026-09-03 20:52:04+00")
     schedule = None,
     catchup = False,
     on_failure_callback=notify_failure,
-    start_date = datetime.datetime(2026, 7, 1),
+    start_date = datetime.datetime(2026, 7, 1, tzinfo=datetime.timezone.utc),
     tags = ["transactions", "backfill"],
         default_args={
         "retries": 1,

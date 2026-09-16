@@ -9,7 +9,7 @@ from alerts import notify_failure, notify_sla_miss
 @dag(
     dag_id = "test_dag",
     schedule = "@daily",
-    start_date = datetime.datetime(2026, 7, 1),
+    start_date = datetime.datetime(2026, 7, 1, tzinfo=datetime.timezone.utc),
     catchup = False,
     on_failure_callback=notify_failure,
     tags = ["test", "ingestion"],

@@ -18,7 +18,7 @@ PARALLEL_URL = "https://abokidollar.com/api/rates"
 @dag(
     dag_id = "parallel_rates_dag",
     schedule = "0 2 * * *",
-    start_date = datetime.datetime(2026, 7, 1),
+    start_date = datetime.datetime(2026, 7, 1, tzinfo=datetime.timezone.utc),
     catchup = False,
     on_failure_callback=notify_failure,
     tags = ["parallel", "ingestion"],
@@ -66,7 +66,7 @@ def parallel_rates_dag():
         assert all('sell_rate' in rate for rate in black_market_rates), "Not all rates have a Sell Rate field"
         assert all(rate.get('buy_rate') <= rate.get('sell_rate') for rate in black_market_rates), "Some Buy Rates are greater than Sell Rates"
         dates = {rate.get('last_updated')[0:10] for rate in black_market_rates if rate.get('last_updated')}
-        days_old = dt.strptime(ds, "%Y-%m-%d") - max(dt.strptime(d, "%Y-%m-%d") for d in dates)
+        days_old = dt.strptime(ds, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc) - max(dt.strptime(d, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc) for d in dates)
         assert days_old.days <= 2, "Some rates are more than 2 days old"
         required_codes = {"USD", "EUR", "GBP", "AED"}
         assert required_codes.issubset({rate.get('code') for rate in black_market_rates}), f"Missing required codes: {required_codes - {rate.get('code') for rate in black_market_rates}}"

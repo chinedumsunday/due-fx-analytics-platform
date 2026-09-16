@@ -84,7 +84,7 @@ def seed_transactions(conn, n=100):
             fee_amount_ngn = round(amount_ngn * 0.01, 2)
             status = random.choices(["initiated", "processing", "completed", "failed"], weights=[0.03, 0.04, 0.9, 0.03])[0]
             hour = random.choices(range(24), weights=HOUR_WEIGHTS)[0]
-            created_at = (datetime.now() - timedelta(days=random.randint(0, 89))).replace(
+            created_at = (datetime.now(timezone.utc) - timedelta(days=random.randint(0, 89))).replace(
                 hour=hour,
                 minute=random.randint(0, 59),
                 second=random.randint(0, 59),
