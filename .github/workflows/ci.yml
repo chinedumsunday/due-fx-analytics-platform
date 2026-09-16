@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Lint
+        run: ruff check airflow/dags data-generator
+
+  dbt-parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dbt
+        run: pip install dbt-bigquery
+
+      - name: Install packages
+        working-directory: dbt/due_fx
+        run: dbt deps
+
+      - name: Parse project
+        working-directory: dbt/due_fx
+        env:
+          DBT_PROJECT: due-fx-analytics
+          DBT_DATASET: staging_fx
+          DBT_KEYFILE: /tmp/fake-key.json
+          DBT_PROFILES_DIR: .
+        run: |
+          echo '{}' > /tmp/fake-key.json
+          dbt parse --no-partial-parse
+
+  sql-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sqlfluff
+        run: pip install sqlfluff sqlfluff-templater-dbt
+
+      - name: Lint SQL
+        working-directory: dbt/due_fx
+        run: sqlfluff lint models --dialect bigquery || true

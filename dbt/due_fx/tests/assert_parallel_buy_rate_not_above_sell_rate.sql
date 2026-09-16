@@ -1,6 +1,5 @@
 {{ config(severity='warn') }}
 
-SELECT * 
-FROM {{ ref('stg_parallel_rates') }}
-WHERE buy_rate > sell_rate
-
+select *
+from {{ ref('stg_parallel_rates') }}
+where buy_rate > sell_rate

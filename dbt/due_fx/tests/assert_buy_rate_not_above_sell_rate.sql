@@ -1,6 +1,5 @@
 {{ config(severity='warn') }}
 
-SELECT * 
-FROM {{ ref('stg_cbn_rates') }}
-WHERE buy_rate > sell_rate
-
+select *
+from {{ ref('stg_cbn_rates') }}
+where buy_rate > sell_rate
