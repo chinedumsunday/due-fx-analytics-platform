@@ -5,6 +5,8 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import get_current_context
 from io import BytesIO
 from datetime import datetime as dt
+from alerts import notify_failure, notify_sla_miss
+from datetime import timedelta 
 
 cutover = dt.fromisoformat("2026-09-03 20:52:04+00")
 
@@ -12,8 +14,15 @@ cutover = dt.fromisoformat("2026-09-03 20:52:04+00")
     dag_id = "backfill_transactions_dag",
     schedule = None,
     catchup = False,
+    on_failure_callback=notify_failure,
     start_date = datetime.datetime(2026, 7, 1),
     tags = ["transactions", "backfill"],
+        default_args={
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+        "sla": timedelta(hours=1),
+    },
+    sla_miss_callback=notify_sla_miss
 )
 def backfill_transactions_dag():
     @task()

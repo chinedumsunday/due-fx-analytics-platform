@@ -5,7 +5,8 @@ from datetime import datetime as dt
 from airflow.sdk import dag, task
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.sdk import get_current_context
-
+from alerts import notify_failure, notify_sla_miss
+from datetime import timedelta
 
 # from airflow.decorators import dag, task
 
@@ -17,6 +18,13 @@ CBN_URL = "https://www.cbn.gov.ng/api/GetAllExchangeRates?format=json"
     start_date = datetime.datetime(2026, 7, 1),
     catchup = False,
     tags = ["cbn", "ingestion"],
+    on_failure_callback=notify_failure,
+        default_args={
+        "retries": 0,
+        "retry_delay": timedelta(minutes=5),
+        "sla": timedelta(hours=1),
+    },
+    sla_miss_callback=notify_sla_miss
 )
 
 def cbn_rates_dag():

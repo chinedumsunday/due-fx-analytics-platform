@@ -5,7 +5,9 @@ from airflow.sdk import get_current_context
 from datetime import datetime as dt
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from io import BytesIO
-# import pandas as pd
+from alerts import notify_failure, notify_sla_miss
+from datetime import timedelta
+
 
 tables = ["users", "corridors"]
 
@@ -15,6 +17,13 @@ tables = ["users", "corridors"]
     start_date = datetime.datetime(2026, 7, 1),
     catchup = False,
     tags = ["reference", "ingestion"],
+    on_failure_callback=notify_failure,
+        default_args={
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+        "sla": timedelta(hours=1),
+    },
+    sla_miss_callback=notify_sla_miss
 )
 
 def reference_extract_dag():
